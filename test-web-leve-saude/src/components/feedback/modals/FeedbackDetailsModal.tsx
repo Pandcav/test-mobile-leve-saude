@@ -11,22 +11,15 @@ import {
   Send,
   MessageCircle
 } from 'lucide-react';
-
-interface Feedback {
-  id: number;
-  user: string;
-  rating: number;
-  comment: string;
-  date: string;
-  status: string;
-}
+import type { Feedback } from '../../../types';
+import { formatDate } from '../../../utils/formatters';
 
 interface FeedbackDetailsModalProps {
   isOpen: boolean;
   feedback: Feedback | null;
   onClose: () => void;
-  onMarkAsRead: (id: number) => void;
-  onMarkAsResponded: (id: number) => void;
+  onMarkAsRead: (id: string) => void;
+  onMarkAsResponded: (id: string) => void;
   onOpenResponse: (feedback: Feedback) => void;
 }
 
@@ -74,17 +67,16 @@ export default function FeedbackDetailsModal({
                 <div className="ml-4">
                   <div className="flex items-center">
                     <User className="w-4 h-4 text-gray-500 mr-2" />
-                    <p className="text-lg font-semibold text-gray-900">{feedback.user}</p>
+                    <p className="text-lg font-semibold text-gray-900">{feedback.user.name}</p>
                   </div>
                   <div className="flex items-center mt-1">
                     <Calendar className="w-4 h-4 text-gray-500 mr-2" />
                     <p className="text-sm text-gray-600">
-                      {new Date(feedback.date).toLocaleDateString('pt-BR', {
-                        day: '2-digit',
-                        month: 'long',
-                        year: 'numeric'
-                      })}
+                      {formatDate(feedback.createdAt)}
                     </p>
+                  </div>
+                  <div className="flex items-center mt-1">
+                    <span className="text-sm text-gray-500">{feedback.user.email}</span>
                   </div>
                 </div>
               </div>

@@ -1,25 +1,20 @@
 import { useAuth } from '../hooks/useAuth';
+import { useFeedbacks } from '../hooks/useFeedbacks';
 import { useState, useEffect } from 'react';
-import { 
-  UserCircle, 
-  LogOut, 
-  MessageSquare, 
-  Star, 
-  Search,
-  Filter,
-  MoreHorizontal,
-  Download,
+import {
+  UserCircle,
+  LogOut,
+  MessageSquare,
+  Star,
   TrendingUp,
   Users,
   Bell,
-  Eye,
-  Check,
-  MessageCircle,
-  Trash2,
-  Send
+  Loader,
+  AlertCircle
 } from 'lucide-react';
-import { BarChart, 
-  Bar, 
+import {
+  BarChart,
+  Bar,
   ResponsiveContainer,
   Tooltip,
   PieChart,
@@ -30,7 +25,9 @@ import { BarChart,
   XAxis,
   YAxis
 } from 'recharts';
-import { FeedbackDetailsModal, FeedbackResponseModal } from '../components/modals';
+import { FeedbackDetailsModal, FeedbackResponseModal, FeedbackTable } from '../components/feedback';
+import type { FeedbackFilters } from '../types';
+import { formatDate } from '../utils/formatters';
 
 type Needle = {
   value: number;
@@ -46,14 +43,26 @@ type Needle = {
 export default function Dashboard() {
   const { user, signOut } = useAuth();
 
+  // Hook para gerenciar feedbacks do Firebase
+  const {
+    feedbacks,
+    loading,
+    error,
+    updateFeedbackStatus,
+    addResponse,
+    deleteFeedback,
+    filterFeedbacks,
+    calculateMetrics
+  } = useFeedbacks();
+
   // Estados para filtros
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('todos');
-  const [ratingFilter, setRatingFilter] = useState('todos');
-  const [dateFilter, setDateFilter] = useState('todos');
-  const [showFilters, setShowFilters] = useState(false);
-  const [showExportMenu, setShowExportMenu] = useState(false);
-  const [openActionMenuId, setOpenActionMenuId] = useState<number | null>(null);
+  const [filters, setFilters] = useState<FeedbackFilters>({
+    search: '',
+    status: 'todos',
+    rating: 'todos',
+    date: 'todos'
+  });
+  const [openActionMenuId, setOpenActionMenuId] = useState<string | null>(null);
 
   // Estados para modais
   const [showResponseModal, setShowResponseModal] = useState(false);
@@ -63,11 +72,16 @@ export default function Dashboard() {
   const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [detailsFeedback, setDetailsFeedback] = useState<any>(null);
 
+  // Estados para notificações
+  const [showNotifications, setShowNotifications] = useState(false);
+
+  // Estados para paginação - removidos pois agora estão no componente FeedbackTable
+
   const cx = 220;
   const cy = 185;
   const iR = 250;
   const oR = 100;
-  
+
 
   const handleSignOut = () => {
     signOut();
@@ -77,22 +91,17 @@ export default function Dashboard() {
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
-      
-      const isClickOutsideExport = !target.closest('.export-menu');
-      const isClickOutsideFilter = !target.closest('.filter-container');
+
       const isClickOutsideAction = !target.closest('.action-menu');
       const isClickOutsideModal = target.classList.contains('modal-backdrop');
-      
-      if (isClickOutsideExport) {
-        setShowExportMenu(false);
-      }
-      
-      if (isClickOutsideFilter) {
-        setShowFilters(false);
-      }
+      const isClickOutsideNotifications = !target.closest('.notifications-menu');
 
       if (isClickOutsideAction) {
         setOpenActionMenuId(null);
+      }
+
+      if (isClickOutsideNotifications) {
+        setShowNotifications(false);
       }
 
       if (isClickOutsideModal) {
@@ -101,136 +110,34 @@ export default function Dashboard() {
       }
     };
 
-    if (showExportMenu || showFilters || openActionMenuId !== null || showResponseModal || showDetailsModal) {
+    if (openActionMenuId !== null || showResponseModal || showDetailsModal || showNotifications) {
       document.addEventListener('mousedown', handleClickOutside);
     }
 
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
-  }, [showExportMenu, showFilters, openActionMenuId, showResponseModal, showDetailsModal]);
+  }, [openActionMenuId, showResponseModal, showDetailsModal, showNotifications]);
 
- const feedbacks = [
-    {
-      id: 1,
-      user: "João Silva",
-      avatar: "/placeholder.svg?height=32&width=32",
-      rating: 5,
-      comment: "Excelente atendimento!",
-      date: "2024-01-24",
-      status: "novo",
-    },
-    {
-      id: 2,
-      user: "Maria Santos",
-      avatar: "/placeholder.svg?height=32&width=32",
-      rating: 4,
-      comment: "Muito bom, mas pode melhorar.",
-      date: "2024-01-23",
-      status: "lido",
-    },
-    {
-      id: 3,
-      user: "Pedro Costa",
-      avatar: "/placeholder.svg?height=32&width=32",
-      rating: 3,
-      comment: "Razoável, esperava mais.",
-      date: "2024-01-22",
-      status: "respondido",
-    },
-    {
-      id: 4,
-      user: "Ana Oliveira",
-      avatar: "/placeholder.svg?height=32&width=32",
-      rating: 5,
-      comment: "Superou minhas expectativas!",
-      date: "2024-01-21",
-      status: "novo",
-    },
-    {
-      id: 5,
-      user: "Carlos Mendes",
-      avatar: "/placeholder.svg?height=32&width=32",
-      rating: 4,
-      comment: "Bom serviço, recomendo.",
-      date: "2024-01-20",
-      status: "lido",
-    },
-    {
-      id: 6,
-      user: "Fernanda Lima",
-      avatar: "/placeholder.svg?height=32&width=32",
-      rating: 2,
-      comment: "Não gostei, precisa melhorar.",
-      date: "2024-01-19",
-      status: "respondido",
-    },
-    {
-      id: 7,
-      user: "Lucas Pereira",
-      avatar: "/placeholder.svg?height=32&width=32",
-      rating: 5,
-      comment: "Perfeito, voltarei com certeza!",
-      date: "2024-01-18",
-      status: "novo",
-    },
-    {
-      id: 8,
-      user: "Mariana Almeida",
-      avatar: "/placeholder.svg?height=32&width=32",
-      rating: 4,
-      comment: "Muito bom, mas pode melhorar.",
-      date: "2024-01-17",
-      status: "lido",
-    },
-    {
-      id: 9,
-      user: "Roberto Souza",
-      avatar: "/placeholder.svg?height=32&width=32",
-      rating: 5,
-      comment: "Excelente serviço!",
-      date: "2024-01-16",
-      status: "novo",
-    },
-    {
-      id: 10,
-      user: "Patrícia Rocha",
-      avatar: "/placeholder.svg?height=32&width=32",
-      rating: 3,
-      comment: "Razoável, esperava mais.",
-      date: "2024-01-15",
-      status: "respondido",
-    },
-    {
-      id: 11,
-      user: "Ricardo Martins",
-      avatar: "/placeholder.svg?height=32&width=32",
-      rating: 4,
-      comment: "Bom serviço, recomendo.",
-      date: "2024-01-14",
-      status: "lido",
-    },
-    {
-      id: 12,
-      user: "Juliana Souza",
-      avatar: "/placeholder.svg?height=32&width=32",
-      rating: 1,
-      comment: "Péssimo atendimento.",
-      date: "2024-01-13",
-      status: "novo",
-    },
-  ];
+  // Filtrar feedbacks usando o hook
+  const filteredFeedbacks = filterFeedbacks(filters);
 
-  // Calcular métricas 
-  const totalFeedbacks = feedbacks.length;
-  const dynamicAverageRating = feedbacks.reduce((acc, feedback) => acc + feedback.rating, 0) / feedbacks.length;
-  const uniqueUsers = new Set(feedbacks.map(f => f.user)).size;
-  const satisfactionRate = (feedbacks.filter(f => f.rating >= 4).length / totalFeedbacks) * 100;
+  // Calcular métricas usando o hook
+  const metricsData = calculateMetrics(filteredFeedbacks);
 
-  const metrics = [
+  // Calcular feedbacks novos para notificações
+  const newFeedbacks = feedbacks.filter(feedback => feedback.status === 'novo');
+  const newFeedbacksCount = newFeedbacks.length;
+
+  // Obter os 5 feedbacks mais recentes com status 'novo'
+  const recentNewFeedbacks = newFeedbacks
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+    .slice(0, 5);
+
+  const metricsCards = [
     {
       title: "Total de Feedbacks",
-      value: totalFeedbacks.toLocaleString(),
+      value: metricsData.totalFeedbacks.toLocaleString(),
       icon: MessageSquare,
       color: "bg-blue-500",
       change: "+12%",
@@ -238,7 +145,7 @@ export default function Dashboard() {
     },
     {
       title: "Nota Média",
-      value: dynamicAverageRating.toFixed(1),
+      value: metricsData.averageRating.toFixed(1),
       icon: Star,
       color: "bg-yellow-500",
       change: "+0.3",
@@ -246,7 +153,7 @@ export default function Dashboard() {
     },
     {
       title: "Usuários Únicos",
-      value: uniqueUsers.toLocaleString(),
+      value: metricsData.uniqueUsers.toLocaleString(),
       icon: Users,
       color: "bg-green-500",
       change: "+8%",
@@ -254,7 +161,7 @@ export default function Dashboard() {
     },
     {
       title: "Taxa de Satisfação",
-      value: `${Math.round(satisfactionRate)}%`,
+      value: `${Math.round(metricsData.satisfactionRate)}%`,
       icon: TrendingUp,
       color: "bg-purple-500",
       change: "+5%",
@@ -262,45 +169,52 @@ export default function Dashboard() {
     },
   ];
 
-
   const status = [
-    { label: 'NOVO', value: feedbacks.filter(feedback => feedback.status === 'novo').length, color: '#22c55e' },
-    { label: 'LIDO', value: feedbacks.filter(feedback => feedback.status === 'lido').length, color: '#3b82f6' },
-    { label: 'RESP', value: feedbacks.filter(feedback => feedback.status === 'respondido').length, color: '#a855f7' },
+    { label: 'NOVO', value: filteredFeedbacks.filter(feedback => feedback.status === 'novo').length, color: '#22c55e' },
+    { label: 'LIDO', value: filteredFeedbacks.filter(feedback => feedback.status === 'lido').length, color: '#3b82f6' },
+    { label: 'RESP', value: filteredFeedbacks.filter(feedback => feedback.status === 'respondido').length, color: '#a855f7' },
   ];
 
   const rating = [
-    { name: '1 Estrela', value: feedbacks.filter(feedback => feedback.rating === 1).length, color: '#ef4444' }, // Vermelho
-    { name: '2 Estrelas', value: feedbacks.filter(feedback => feedback.rating === 2).length, color: '#f97316' }, // Laranja
-    { name: '3 Estrelas', value: feedbacks.filter(feedback => feedback.rating === 3).length, color: '#eab308' }, // Amarelo
-    { name: '4 Estrelas', value: feedbacks.filter(feedback => feedback.rating === 4).length, color: '#84cc16' }, // Verde claro
-    { name: '5 Estrelas', value: feedbacks.filter(feedback => feedback.rating === 5).length, color: '#22c55e' }, // Verde
+    { name: '1 Estrela', value: filteredFeedbacks.filter(feedback => feedback.rating === 1).length, color: '#ef4444' }, // Vermelho
+    { name: '2 Estrelas', value: filteredFeedbacks.filter(feedback => feedback.rating === 2).length, color: '#f97316' }, // Laranja
+    { name: '3 Estrelas', value: filteredFeedbacks.filter(feedback => feedback.rating === 3).length, color: '#eab308' }, // Amarelo
+    { name: '4 Estrelas', value: filteredFeedbacks.filter(feedback => feedback.rating === 4).length, color: '#84cc16' }, // Verde claro
+    { name: '5 Estrelas', value: filteredFeedbacks.filter(feedback => feedback.rating === 5).length, color: '#22c55e' }, // Verde
   ];
 
   const mediumRating = [
-    { name: "Satisfação", value: feedbacks.reduce((acc, feedback) => acc + feedback.rating, 0) / feedbacks.length, color: '#00C49F' },
-    { name: "Máximo", value: 5 - (feedbacks.reduce((acc, feedback) => acc + feedback.rating, 0) / feedbacks.length), color: '#f1f5f9' }
+    { name: "Satisfação", value: metricsData.averageRating, color: '#00C49F' },
+    { name: "Máximo", value: 5 - metricsData.averageRating, color: '#f1f5f9' }
   ];
 
   // Calcular a média para o gauge
-  const averageRating = dynamicAverageRating;
+  const averageRating = metricsData.averageRating;
   const value = averageRating;
 
   // Funções para ações dos feedbacks
-  const handleMarkAsRead = (feedbackId: number) => {
-    console.log(`Marcando feedback ${feedbackId} como lido`);
-    setOpenActionMenuId(null);
-    alert(`Feedback ${feedbackId} marcado como lido!`);
+  const handleMarkAsRead = async (feedbackId: string) => {
+    try {
+      await updateFeedbackStatus(feedbackId, 'lido');
+      setOpenActionMenuId(null);
+      alert(`Feedback marcado como lido!`);
+    } catch (error) {
+      alert('Erro ao marcar feedback como lido.');
+    }
   };
 
-  const handleMarkAsResponded = (feedbackId: number) => {
-    console.log(`Marcando feedback ${feedbackId} como respondido`);
-    setOpenActionMenuId(null);
-    alert(`Feedback ${feedbackId} marcado como respondido!`);
+  const handleMarkAsResponded = async (feedbackId: string) => {
+    try {
+      await updateFeedbackStatus(feedbackId, 'respondido');
+      setOpenActionMenuId(null);
+      alert(`Feedback marcado como respondido!`);
+    } catch (error) {
+      alert('Erro ao marcar feedback como respondido.');
+    }
   };
 
-  const handleViewDetails = (feedbackId: number) => {
-    const feedback = feedbacks.find(f => f.id === feedbackId);
+  const handleViewDetails = (feedbackId: string) => {
+    const feedback = filteredFeedbacks.find(f => f.id === feedbackId);
     if (feedback) {
       setDetailsFeedback(feedback);
       setShowDetailsModal(true);
@@ -308,16 +222,16 @@ export default function Dashboard() {
     setOpenActionMenuId(null);
   };
 
-  const handleDeleteFeedback = (feedbackId: number) => {
-    if (window.confirm(`Tem certeza que deseja excluir o feedback #${feedbackId}?`)) {
-      console.log(`Excluindo feedback ${feedbackId}`);
-      alert(`Feedback ${feedbackId} excluído com sucesso!`);
-      setOpenActionMenuId(null);
+  const handleDeleteFeedback = async (feedbackId: string) => {
+    if (window.confirm(`Tem certeza que deseja excluir este feedback?`)) {
+      try {
+        await deleteFeedback(feedbackId);
+        alert(`Feedback excluído com sucesso!`);
+        setOpenActionMenuId(null);
+      } catch (error) {
+        alert('Erro ao excluir feedback.');
+      }
     }
-  };
-
-  const toggleActionMenu = (feedbackId: number) => {
-    setOpenActionMenuId(openActionMenuId === feedbackId ? null : feedbackId);
   };
 
   // Função para abrir modal de resposta
@@ -328,14 +242,16 @@ export default function Dashboard() {
   };
 
   // Função para enviar resposta
-  const handleSendResponse = (feedbackId: number, responseText: string) => {
-    console.log(`Enviando resposta para feedback ${feedbackId}:`, responseText);
-  
-    const feedback = feedbacks.find(f => f.id === feedbackId);
-    if (feedback) {
-      alert(`Resposta enviada com sucesso para ${feedback.user}!\n\nResposta: "${responseText}"`);
+  const handleSendResponse = async (feedbackId: string, responseText: string) => {
+    try {
+      await addResponse(feedbackId, responseText, user?.email || 'admin');
+      const feedback = filteredFeedbacks.find(f => f.id === feedbackId);
+      if (feedback) {
+        alert(`Resposta enviada com sucesso para ${feedback.user.name}!\n\nResposta: "${responseText}"`);
+      }
+    } catch (error) {
+      alert('Erro ao enviar resposta.');
     }
-
   };
 
   // Função para fechar modal de resposta
@@ -350,252 +266,267 @@ export default function Dashboard() {
     setDetailsFeedback(null);
   };
 
-  // Função para contar filtros ativos
-  const getActiveFiltersCount = () => {
-    let count = 0;
-    if (searchTerm) count++;
-    if (statusFilter !== 'todos') count++;
-    if (ratingFilter !== 'todos') count++;
-    if (dateFilter !== 'todos') count++;
-    return count;
+  // Função para atualizar filtros individuais
+  const updateFilter = (key: keyof FeedbackFilters, value: string) => {
+    setFilters(prev => ({ ...prev, [key]: value }));
   };
-
-  // Função para obter cores do status
-  const getStatusColors = (status: string) => {
-    switch (status) {
-      case 'novo':
-        return 'bg-green-100 text-green-800';
-      case 'lido':
-        return 'bg-blue-100 text-blue-800';
-      case 'respondido':
-        return 'bg-purple-100 text-purple-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const activeFiltersCount = getActiveFiltersCount();
 
   // Função para resetar todos os filtros
   const resetFilters = () => {
-    setSearchTerm('');
-    setStatusFilter('todos');
-    setRatingFilter('todos');
-    setDateFilter('todos');
-  };
-
-  
-  const filteredFeedbacks = feedbacks.filter(feedback => {
-    const matchesSearch = feedback.user.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         feedback.comment.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = statusFilter === 'todos' || feedback.status === statusFilter;
-    
-    const matchesRating = ratingFilter === 'todos' || feedback.rating.toString() === ratingFilter;
-    
-    let matchesDate = true;
-    if (dateFilter !== 'todos') {
-      const feedbackDate = new Date(feedback.date);
-      const today = new Date();
-      
-      switch(dateFilter) {
-        case 'hoje':
-          matchesDate = feedbackDate.toDateString() === today.toDateString();
-          break;
-        case 'semana':
-          const weekAgo = new Date();
-          weekAgo.setDate(today.getDate() - 7);
-          matchesDate = feedbackDate >= weekAgo;
-          break;
-        case 'mes':
-          const monthAgo = new Date();
-          monthAgo.setMonth(today.getMonth() - 1);
-          matchesDate = feedbackDate >= monthAgo;
-          break;
-      }
-    }
-    
-    return matchesSearch && matchesStatus && matchesRating && matchesDate;
-  });
-
-  // Função para exportar dados para CSV
-  const exportToCSV = () => {
-    const headers = ['ID', 'Usuario', 'Avaliacao', 'Comentario', 'Data', 'Status'];
-    
-    const csvData = filteredFeedbacks.map(feedback => [
-      feedback.id,
-      `"${feedback.user}"`,
-      feedback.rating,
-      `"${feedback.comment.replace(/"/g, '""')}"`,
-      feedback.date,
-      feedback.status
-    ]);
-
-    const csvContent = [headers, ...csvData]
-      .map(row => row.join(','))
-      .join('\n');
-    
-    const blob = new Blob(['\uFEFF' + csvContent], { 
-      type: 'text/csv;charset=utf-8;' 
+    setFilters({
+      search: '',
+      status: 'todos',
+      rating: 'todos',
+      date: 'todos'
     });
-    
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0]; 
-    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-'); 
-    link.setAttribute('download', `feedbacks_${dateStr}_${timeStr}.csv`);
-    
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    URL.revokeObjectURL(url);
-    setShowExportMenu(false);
   };
 
-  // Função para exportar dados para JSON
-  const exportToJSON = () => {
-    const exportData = {
-      metadata: {
-        exportDate: new Date().toISOString(),
-        totalRecords: filteredFeedbacks.length,
-        filters: {
-          search: searchTerm || 'nenhum',
-          status: statusFilter,
-          rating: ratingFilter
-        }
-      },
-      feedbacks: filteredFeedbacks.map(feedback => ({
-        id: feedback.id,
-        usuario: feedback.user,
-        avaliacao: feedback.rating,
-        comentario: feedback.comment,
-        data: feedback.date,
-        status: feedback.status
-      }))
-    };
-    
-    const jsonContent = JSON.stringify(exportData, null, 2);
-    const blob = new Blob([jsonContent], { type: 'application/json' });
-    
-    const link = document.createElement('a');
-    const url = URL.createObjectURL(blob);
-    link.setAttribute('href', url);
-    
-    const now = new Date();
-    const dateStr = now.toISOString().split('T')[0];
-    const timeStr = now.toTimeString().split(' ')[0].replace(/:/g, '-');
-    link.setAttribute('download', `feedbacks_${dateStr}_${timeStr}.json`);
-    
-    link.style.visibility = 'hidden';
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    
-    URL.revokeObjectURL(url);
-    setShowExportMenu(false);
+  // Função para marcar todas as notificações como lidas
+  const markAllAsRead = async () => {
+    try {
+      const promises = newFeedbacks.map(feedback =>
+        updateFeedbackStatus(feedback.id, 'lido')
+      );
+      await Promise.all(promises);
+      setShowNotifications(false);
+      alert(`${newFeedbacksCount} feedback(s) marcado(s) como lido!`);
+    } catch (error) {
+      alert('Erro ao marcar feedbacks como lidos.');
+    }
+  };
+
+  // Função para visualizar feedback específico das notificações
+  const viewFeedbackFromNotification = (feedbackId: string) => {
+    const feedback = feedbacks.find(f => f.id === feedbackId);
+    if (feedback) {
+      setDetailsFeedback(feedback);
+      setShowDetailsModal(true);
+      setShowNotifications(false);
+    }
   };
 
   const RADIAN = Math.PI / 180;
 
   const needle = ({ value, data, cx, cy, iR, oR, color }: Needle) => {
-  const total = data.reduce((sum, entry) => sum + entry.value, 0);
-  const ang = 180.0 * (1 - value / total);
-  const length = (iR + 2 * oR) / 3;
-  const sin = Math.sin(-RADIAN * ang);
-  const cos = Math.cos(-RADIAN * ang);
-  const r = 5;
-  const x0 = cx + 5;
-  const y0 = cy + 5;
-  const xba = x0 + r * sin;
-  const yba = y0 - r * cos;
-  const xbb = x0 - r * sin;
-  const ybb = y0 + r * cos;
-  const xp = x0 + length * cos;
-  const yp = y0 + length * sin;
+    const total = data.reduce((sum, entry) => sum + entry.value, 0);
+    const ang = 180.0 * (1 - value / total);
+    const length = (iR + 2 * oR) / 3;
+    const sin = Math.sin(-RADIAN * ang);
+    const cos = Math.cos(-RADIAN * ang);
+    const r = 5;
+    const x0 = cx + 5;
+    const y0 = cy + 5;
+    const xba = x0 + r * sin;
+    const yba = y0 - r * cos;
+    const xbb = x0 - r * sin;
+    const ybb = y0 + r * cos;
+    const xp = x0 + length * cos;
+    const yp = y0 + length * sin;
 
-  return [
-    <circle key="needle-circle" cx={x0} cy={y0} r={r} fill={color} stroke="none" />,
-    <path
-      key="needle-path"
-      d={`M${xba} ${yba}L${xbb} ${ybb} L${xp} ${yp} L${xba} ${yba}`}
-      stroke="#none"
-      fill={color}
-    />,
-  ];
-};
+    return [
+      <circle key="needle-circle" cx={x0} cy={y0} r={r} fill={color} stroke="none" />,
+      <path
+        key="needle-path"
+        d={`M${xba} ${yba}L${xbb} ${ybb} L${xp} ${yp} L${xba} ${yba}`}
+        stroke="#none"
+        fill={color}
+      />,
+    ];
+  };
 
   return (
     <div className="min-h-screen bg-purple-100">
-       <header className="bg-white border-b border-gray-200 px-6 py-4 rounded-b-3xl">
+      <header className="bg-white border-b border-gray-200 px-6 py-4 rounded-b-3xl">
         <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-4xl font-bold text-gray-800">Leve Saúde Dashboard</h1>
-              <p className="text-2xl text-gray-600">Gerencie feedbacks e monitore a satisfação</p>
-            </div>
-            
-             <div className="flex items-center gap-4">
-              <button className="p-2 text-gray-400 hover:text-gray-600">
-                <Bell className="w-8 h-8" />
-              </button>
+          <div>
+            <h1 className="text-4xl font-bold text-gray-800">Leve Saúde Dashboard</h1>
+            <p className="text-2xl text-gray-600">Gerencie feedbacks e monitore a satisfação</p>
+          </div>
 
-              <div className="flex items-center space-x-2">
-                <UserCircle className="w-8 h-8 text-gray-600" />
-                <span className="text-2xl text-gray-700">{user?.email}</span>
-              </div>
-
+          <div className="flex items-center gap-4">
+            {/* Sistema de Notificações */}
+            <div className="relative notifications-menu">
               <button
-                onClick={handleSignOut}
-                className="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                className={`p-2 transition-colors relative ${newFeedbacksCount > 0
+                  ? 'text-purple-600 hover:text-purple-700'
+                  : 'text-gray-400 hover:text-gray-600'
+                  }`}
+                onClick={() => setShowNotifications(!showNotifications)}
+                title={`${newFeedbacksCount} feedback(s) novo(s)`}
               >
-                <LogOut className="w-8 h-8" />
-                <span className="text-2xl">Sair</span>
+                <Bell className="w-8 h-8" />
+                {newFeedbacksCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full min-w-[20px] h-5 flex items-center justify-center px-1">
+                    {newFeedbacksCount > 99 ? '99+' : newFeedbacksCount}
+                  </span>
+                )}
               </button>
+
+              {/* Menu de Notificações */}
+              {showNotifications && (
+                <div className="absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-lg border border-gray-200 z-30 max-h-96 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-gray-200 bg-gray-50">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold text-gray-800">
+                        Notificações {newFeedbacksCount > 0 && `(${newFeedbacksCount})`}
+                      </h3>
+                      {newFeedbacksCount > 0 && (
+                        <button
+                          onClick={markAllAsRead}
+                          className="text-sm text-purple-600 hover:text-purple-700 font-medium"
+                        >
+                          Marcar todas como lidas
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="max-h-80 overflow-y-auto">
+                    {newFeedbacksCount === 0 ? (
+                      <div className="px-4 py-8 text-center text-gray-500">
+                        <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                        <p className="text-lg font-medium">Nenhuma notificação</p>
+                        <p className="text-sm mt-1">Todos os feedbacks foram lidos</p>
+                      </div>
+                    ) : (
+                      <div className="py-2">
+                        {recentNewFeedbacks.map((feedback) => (
+                          <div
+                            key={feedback.id}
+                            className="px-4 py-3 hover:bg-gray-50 border-b border-gray-100 cursor-pointer transition-colors"
+                            onClick={() => viewFeedbackFromNotification(feedback.id)}
+                          >
+                            <div className="flex items-start space-x-3">
+                              <div className="flex-shrink-0">
+                                <UserCircle className="w-8 h-8 text-gray-400" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between">
+                                  <p className="text-sm font-medium text-gray-900 truncate">
+                                    {feedback.user.name}
+                                  </p>
+                                  <div className="flex items-center">
+                                    {[...Array(5)].map((_, i) => (
+                                      <Star
+                                        key={i}
+                                        className={`w-3 h-3 ${i < feedback.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                                          }`}
+                                      />
+                                    ))}
+                                  </div>
+                                </div>
+                                <p className="text-sm text-gray-600 truncate mt-1">
+                                  {feedback.comment}
+                                </p>
+                                <p className="text-xs text-gray-400 mt-1">
+                                  {formatDate(feedback.createdAt)}
+                                </p>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+
+                        {newFeedbacksCount > 5 && (
+                          <div className="px-4 py-3 text-center border-t border-gray-200 bg-gray-50">
+                            <p className="text-sm text-gray-600">
+                              E mais {newFeedbacksCount - 5} feedback(s) novo(s)...
+                            </p>
+                            <button
+                              onClick={() => {
+                                updateFilter('status', 'novo');
+                                setShowNotifications(false);
+                              }}
+                              className="text-sm text-purple-600 hover:text-purple-700 font-medium mt-1"
+                            >
+                              Ver todos os feedbacks novos
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
+
+            <div className="flex items-center space-x-2">
+              <UserCircle className="w-8 h-8 text-gray-600" />
+              <span className="text-2xl text-gray-700">{user?.email}</span>
+            </div>
+
+            <button
+              onClick={handleSignOut}
+              className="flex items-center space-x-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            >
+              <LogOut className="w-8 h-8" />
+              <span className="text-2xl">Sair</span>
+            </button>
+          </div>
         </div>
       </header>
 
       <main className="w-2/3 mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {metrics.map((metrics, index) => (
-            <div key={index} className="h-auto bg-white rounded-lg shadow p-6">
-              <div className="flex items-center">
-                <div className={`${metrics.color} p-3 rounded-lg`}>
-                  <metrics.icon className="w-8 h-8 text-white" />
-                </div>
+        {/* Indicador de carregamento */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader className="w-8 h-8 animate-spin text-purple-600 mr-3" />
+            <span className="text-lg text-gray-600">Carregando feedbacks...</span>
+          </div>
+        )}
 
-                <div className="ml-4">
-                  <p className="text-xl font-medium text-gray-600">{metrics.title}</p>
-                  <p className="text-2xl font-bold text-gray-900">{metrics.value}</p>
-                </div>
+        {/* Indicador de erro */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <div className="flex items-center">
+              <AlertCircle className="w-6 h-6 text-red-600 mr-3" />
+              <div>
+                <h3 className="text-lg font-medium text-red-800">Erro ao carregar dados</h3>
+                <p className="text-red-700">{error}</p>
               </div>
-                <p className="text-xl text-green-600 flex items-center mt-5">
-                  <TrendingUp className="w-4 h-4 mr-1" />
-                  {metrics.change} desde o mês passado
-                </p>
             </div>
-          ))}
-        </div>
+          </div>
+        )}
+
+        {!loading && !error && (
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+              {metricsCards.map((metric, index) => (
+                <div key={index} className="h-auto bg-white rounded-lg shadow p-6">
+                  <div className="flex items-center">
+                    <div className={`${metric.color} p-3 rounded-lg`}>
+                      <metric.icon className="w-8 h-8 text-white" />
+                    </div>
+
+                    <div className="ml-4">
+                      <p className="text-xl font-medium text-gray-600">{metric.title}</p>
+                      <p className="text-2xl font-bold text-gray-900">{metric.value}</p>
+                    </div>
+                  </div>
+                  <p className="text-xl text-green-600 flex items-center mt-5">
+                    <TrendingUp className="w-4 h-4 mr-1" />
+                    {metric.change} desde o mês passado
+                  </p>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
 
         <div className='flex justify-between items-center mb-8'>
           <div className=' h-85 bg-white w-1/2 rounded-lg py-4 mr-6'>
             <h2 className='text-2xl font-semibold text-gray-800 text-center mb-2'>Distribuição de Avaliações por Nota (Rating)</h2>
             <ResponsiveContainer width="100%" height="90%">
               <BarChart width={150} height={40} data={rating} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                <XAxis 
-                  dataKey="name" 
+                <XAxis
+                  dataKey="name"
                   tick={{ fontSize: 12 }}
                   angle={-45}
                   textAnchor="end"
                   height={60}
                 />
-                <YAxis tick={{ fontSize: 12 }} />  
+                <YAxis tick={{ fontSize: 12 }} />
                 <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
-                <Tooltip 
+                <Tooltip
                   formatter={(value: number, name: string) => [
                     `${value} feedback${value !== 1 ? 's' : ''}`,
                     name
@@ -608,8 +539,8 @@ export default function Dashboard() {
                     fontSize: '14px'
                   }}
                 />
-                <Bar 
-                  dataKey="value" 
+                <Bar
+                  dataKey="value"
                   radius={[4, 4, 0, 0]}
                   label={({ value }) => value > 0 ? value : ''}
                 >
@@ -643,23 +574,23 @@ export default function Dashboard() {
                     ))}
                   </Pie>
                   {needle({ value, data: mediumRating, cx, cy, iR, oR, color: '#797979ff' })}
-                  <text 
-                    x="50%" 
-                    y="75%" 
-                    textAnchor="middle" 
-                    dominantBaseline="middle" 
-                    fontSize="24" 
-                    fontWeight="bold" 
+                  <text
+                    x="50%"
+                    y="75%"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize="24"
+                    fontWeight="bold"
                     fill="#374151"
                   >
                     {averageRating.toFixed(1)}
                   </text>
-                  <text 
-                    x="50%" 
-                    y="82%" 
-                    textAnchor="middle" 
-                    dominantBaseline="middle" 
-                    fontSize="14" 
+                  <text
+                    x="50%"
+                    y="82%"
+                    textAnchor="middle"
+                    dominantBaseline="middle"
+                    fontSize="14"
                     fill="#9CA3AF"
                   >
                     de 5.0
@@ -672,7 +603,7 @@ export default function Dashboard() {
               <h2 className='text-2xl font-semibold text-gray-800 text-center mb-2'>Proporção de Status dos Feedbacks</h2>
               <ResponsiveContainer width="100%" height="90%">
                 <PieChart width={150} height={40}>
-                  <Tooltip 
+                  <Tooltip
                     formatter={(value: number, name: string) => [
                       `${value} feedback${value !== 1 ? 's' : ''}`,
                       name === 'NOVO' ? 'Novos' : name === 'LIDO' ? 'Lidos' : 'Respondidos'
@@ -694,345 +625,46 @@ export default function Dashboard() {
                     cy="50%"
                     innerRadius={60}
                     outerRadius={100}
-                    label={({value, percent}: any) => 
+                    label={({ value, percent }: any) =>
                       value && value > 0 && percent ? `${(percent * 100).toFixed(0)}%` : ''
-                      
+
                     }
                     labelLine={false}
-                    
-                    >
+
+                  >
                     {status.map((entry) => (
                       <Cell key={`cell-${entry.label}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Legend 
-                    layout="vertical" 
-                    align="right" 
-                    verticalAlign="middle" 
-                    iconSize={12} 
-                    iconType='circle' 
-                    wrapperStyle={{fontSize: '1.5rem', paddingRight: '5px'}}
-                    formatter={(value) => 
-                      value === 'NOVO' ? 'Novos' : 
-                      value === 'LIDO' ? 'Lidos' : 'Respondidos'
+                  <Legend
+                    layout="vertical"
+                    align="right"
+                    verticalAlign="middle"
+                    iconSize={12}
+                    iconType='circle'
+                    wrapperStyle={{ fontSize: '1.5rem', paddingRight: '5px' }}
+                    formatter={(value) =>
+                      value === 'NOVO' ? 'Novos' :
+                        value === 'LIDO' ? 'Lidos' : 'Respondidos'
                     }
                   />
                 </PieChart>
-              </ResponsiveContainer>               
-            </div>
-          </div> 
-        </div>
-
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-4xl font-semibold text-gray-800">Feedbacks Recentes</h1>
-                <p className="text-2xl text-gray-600">
-                  {activeFiltersCount > 0 ? (
-                    <span>
-                      Mostrando {filteredFeedbacks.length} de {feedbacks.length} feedbacks 
-                      <span className="text-purple-600 font-medium"> (filtrados)</span>
-                    </span>
-                  ) : (
-                    <span>Mostrando {filteredFeedbacks.length} feedbacks</span>
-                  )}
-                </p>
-              </div>
-
-              <div className="flex space-x-2">
-                <div className="relative">
-                  <Search className="absolute  left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-7 h-7" />
-                  <input 
-                    placeholder="Buscar feedbacks..." 
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="h-10 text-2xl pl-12 w-90 border border-gray-300 rounded-lg
-                     focus:outline-none focus:ring-gray-300 focus:border-gray-300 focus:ring-2" 
-                  />
-                </div>
-
-                <div className="relative filter-container">
-                  <button 
-                    className={`p-2 transition-colors relative ${
-                      activeFiltersCount > 0 
-                        ? 'text-purple-600 hover:text-purple-700' 
-                        : 'text-gray-400 hover:text-gray-600'
-                    }`}
-                    onClick={() => setShowFilters(!showFilters)}
-                    title={`${activeFiltersCount} filtro(s) ativo(s)`}
-                  >
-                    <Filter className="w-7 h-7" />
-                    {activeFiltersCount > 0 && (
-                      <span className="absolute -top-1 -right-1 bg-purple-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                        {activeFiltersCount}
-                      </span>
-                    )}
-                  </button>
-                </div>
-                
-                {/* Menu de Exportação */}
-                <div className="relative export-menu">
-                  <button 
-                    className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
-                    onClick={() => setShowExportMenu(!showExportMenu)}
-                    title="Exportar dados"
-                  >
-                    <Download className="w-7 h-7"/>
-                  </button>
-
-                  {/* Dropdown Menu */}
-                  {showExportMenu && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
-                      <div className="py-2">
-                        <button
-                          onClick={exportToCSV}
-                          className="flex items-center w-full px-4 py-2 text-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                        >
-                          <Download className="w-5 h-5 mr-3" />
-                          Exportar CSV
-                        </button>
-                        <button
-                          onClick={exportToJSON}
-                          className="flex items-center w-full px-4 py-2 text-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                        >
-                          <Download className="w-5 h-5 mr-3" />
-                          Exportar JSON
-                        </button>
-                        <hr className="my-2" />
-                        <div className="px-4 py-2 text-sm text-gray-500">
-                          {filteredFeedbacks.length} registro(s) serão exportados
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+              </ResponsiveContainer>
             </div>
           </div>
-
-          {/* Painel de Filtros */}
-          {showFilters && (
-            <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 filter-container">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                {/* Filtro por Status */}
-                <div>
-                  <label className="block text-xl font-medium text-gray-700 mb-2">Status</label>
-                  <select 
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full text-xl border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="todos">Todos os Status</option>
-                    <option value="novo">Novo</option>
-                    <option value="lido">Lido</option>
-                    <option value="respondido">Respondido</option>
-                  </select>
-                </div>
-
-                {/* Filtro por Rating */}
-                <div>
-                  <label className="block text-xl font-medium text-gray-700 mb-2">Avaliação</label>
-                  <select 
-                    value={ratingFilter}
-                    onChange={(e) => setRatingFilter(e.target.value)}
-                    className="w-full text-xl border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="todos">Todas as Notas</option>
-                    <option value="5">5 Estrelas</option>
-                    <option value="4">4 Estrelas</option>
-                    <option value="3">3 Estrelas</option>
-                    <option value="2">2 Estrelas</option>
-                    <option value="1">1 Estrela</option>
-                  </select>
-                </div>
-
-                {/* Filtro por Data */}
-                <div>
-                  <label className="block text-xl font-medium text-gray-700 mb-2">Período</label>
-                  <select 
-                    value={dateFilter}
-                    onChange={(e) => setDateFilter(e.target.value)}
-                    className="w-full text-xl border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500"
-                  >
-                    <option value="todos">Todas as Datas</option>
-                    <option value="hoje">Hoje</option>
-                    <option value="semana">Última Semana</option>
-                    <option value="mes">Último Mês</option>
-                  </select>
-                </div>
-
-                {/* Botão para limpar filtros */}
-                <div className="flex items-end">
-                  <button 
-                    onClick={resetFilters}
-                    className="px-4 py-2 bg-purple-600 text-white text-xl rounded-lg hover:bg-purple-700 transition-colors"
-                  >
-                    Limpar Filtros
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Table */}
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xl font-medium text-gray-500 uppercase tracking-wider">
-                    Usuário
-                  </th>
-                  <th className="px-6 py-3 text-left text-xl font-medium text-gray-500 uppercase tracking-wider">
-                    Nota
-                  </th>
-                  <th className="px-6 py-3 text-left text-xl font-medium text-gray-500 uppercase tracking-wider">
-                    Comentário
-                  </th>
-                  <th className="px-6 py-3 text-left text-xl font-medium text-gray-500 uppercase tracking-wider">
-                    Data
-                  </th>
-                  <th className="px-6 py-3 text-left text-xl font-medium text-gray-500 uppercase tracking-wider">
-                    Status
-                  </th>
-                  <th className="px-6 py-3 text-left text-xl font-medium text-gray-500 uppercase tracking-wider">
-                    Ações
-                  </th>
-                </tr>
-              </thead>
-
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredFeedbacks.length === 0 ? (
-                  <tr>
-                    <td colSpan={6} className="px-6 py-12 text-center">
-                      <div className="text-gray-500">
-                        <Filter className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                        <p className="text-2xl font-medium">Nenhum feedback encontrado</p>
-                        <p className="text-xl mt-2">
-                          {activeFiltersCount > 0 
-                            ? 'Tente ajustar os filtros para ver mais resultados.' 
-                            : 'Não há feedbacks para exibir.'
-                          }
-                        </p>
-                        {activeFiltersCount > 0 && (
-                          <button 
-                            onClick={resetFilters}
-                            className="mt-4 px-4 py-2 bg-purple-600 text-white text-lg rounded-lg hover:bg-purple-700 transition-colors"
-                          >
-                            Limpar Filtros
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                  </tr>
-                ) : (
-                  filteredFeedbacks.map((feedback) => (
-                    <tr key={feedback.id} className={`hover:bg-gray-50 ${openActionMenuId === feedback.id ? 'bg-blue-50' : ''}`}>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          <UserCircle className="w-8 h-8 text-gray-400" />
-                          <div className="ml-3">
-                            <div className="text-xl font-medium text-gray-900">{feedback.user}</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <Star
-                              key={i}
-                              className={`w-4 h-4 ${
-                                i < feedback.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
-                              }`}
-                            />
-                          ))}
-                          <span className="ml-2 text-xl text-gray-600">{feedback.rating}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-xl text-gray-900 max-w-xs truncate">{feedback.comment}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xl text-gray-500">
-                        {feedback.date}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-xl text-gray-500">
-                        <span className={`px-2 py-1 rounded-full text-xl ${getStatusColors(feedback.status)}`}>
-                          {feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1)}
-                        </span>
-                      </td>
-                      <td className="px-9 py-4 whitespace-nowrap text-right text-xl font-medium flex justify-start items-center">
-                        <div className="relative action-menu">
-                          <button 
-                            className="text-gray-400 hover:text-gray-600 p-1"
-                            onClick={() => toggleActionMenu(feedback.id)}
-                            title="Mais ações"
-                          >
-                            <MoreHorizontal className="w-7 h-7" />
-                          </button>
-
-                          {/* Menu de Ações */}
-                          {openActionMenuId === feedback.id && (
-                            <div className="absolute right-0 mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-20">
-                              <div className="py-2">
-                                <button
-                                  onClick={() => handleViewDetails(feedback.id)}
-                                  className="flex items-center w-full px-4 py-2 text-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                                >
-                                  <Eye className="w-5 h-5 mr-3" />
-                                  Ver Detalhes
-                                </button>
-                                
-                                {feedback.status === 'novo' && (
-                                  <button
-                                    onClick={() => handleMarkAsRead(feedback.id)}
-                                    className="flex items-center w-full px-4 py-2 text-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                                  >
-                                    <Check className="w-5 h-5 mr-3" />
-                                    Marcar como Lido
-                                  </button>
-                                )}
-                                
-                                {(feedback.status === 'novo' || feedback.status === 'lido') && (
-                                  <>
-                                    <button
-                                      onClick={() => handleMarkAsResponded(feedback.id)}
-                                      className="flex items-center w-full px-4 py-2 text-lg text-gray-700 hover:bg-gray-100 transition-colors"
-                                    >
-                                      <MessageCircle className="w-5 h-5 mr-3" />
-                                      Marcar como Respondido
-                                    </button>
-                                    
-                                    <button
-                                      onClick={() => handleOpenResponse(feedback)}
-                                      className="flex items-center w-full px-4 py-2 text-lg text-blue-600 hover:bg-blue-50 transition-colors"
-                                    >
-                                      <Send className="w-5 h-5 mr-3" />
-                                      Responder
-                                    </button>
-                                  </>
-                                )}
-                                
-                                <hr className="my-2" />
-                                
-                                <button
-                                  onClick={() => handleDeleteFeedback(feedback.id)}
-                                  className="flex items-center w-full px-4 py-2 text-lg text-red-600 hover:bg-red-50 transition-colors"
-                                >
-                                  <Trash2 className="w-5 h-5 mr-3" />
-                                  Excluir Feedback
-                                </button>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
-          </div>
         </div>
+
+        <FeedbackTable
+          feedbacks={filteredFeedbacks}
+          filters={filters}
+          onFilterChange={updateFilter}
+          onMarkAsRead={handleMarkAsRead}
+          onMarkAsResponded={handleMarkAsResponded}
+          onViewDetails={handleViewDetails}
+          onDeleteFeedback={handleDeleteFeedback}
+          onOpenResponse={handleOpenResponse}
+          onResetFilters={resetFilters}
+        />
       </main>
 
       {/* Modais */}

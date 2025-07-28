@@ -5,21 +5,13 @@ import {
   Star
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
-
-interface Feedback {
-  id: number;
-  user: string;
-  rating: number;
-  comment: string;
-  date: string;
-  status: string;
-}
+import type { Feedback } from '../../../types';
 
 interface FeedbackResponseModalProps {
   isOpen: boolean;
   feedback: Feedback | null;
   onClose: () => void;
-  onSendResponse: (feedbackId: number, response: string) => void;
+  onSendResponse: (feedbackId: string, response: string) => void;
 }
 
 export default function FeedbackResponseModal({
@@ -60,7 +52,7 @@ export default function FeedbackResponseModal({
               Responder Feedback
             </h3>
             <p className="text-sm text-gray-600 mt-1">
-              Respondendo para: {feedback.user}
+              Respondendo para: {feedback.user.name}
             </p>
           </div>
           <button
@@ -79,8 +71,8 @@ export default function FeedbackResponseModal({
               <div className="flex items-center">
                 <UserCircle className="w-8 h-8 text-gray-400" />
                 <div className="ml-3">
-                  <p className="font-medium text-gray-900">{feedback.user}</p>
-                  <p className="text-sm text-gray-500">{feedback.date}</p>
+                  <p className="font-medium text-gray-900">{feedback.user.name}</p>
+                  <p className="text-sm text-gray-500">{feedback.user.email}</p>
                 </div>
               </div>
               <div className="flex items-center">
