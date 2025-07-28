@@ -67,19 +67,17 @@ export default function Dashboard() {
   const cy = 185;
   const iR = 250;
   const oR = 100;
-  const value = 50;
   
 
   const handleSignOut = () => {
     signOut();
   };
 
-  // Fechar menus quando clicar fora
+  // Fechar menus
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as Element;
       
-      // Verificar se o clique foi fora dos menus
       const isClickOutsideExport = !target.closest('.export-menu');
       const isClickOutsideFilter = !target.closest('.filter-container');
       const isClickOutsideAction = !target.closest('.action-menu');
@@ -111,43 +109,6 @@ export default function Dashboard() {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showExportMenu, showFilters, openActionMenuId, showResponseModal, showDetailsModal]);
-
-  // Dados mockados para demonstração
- 
-    const metrics = [
-    {
-      title: "Total de Feedbacks",
-      value: "2,543",
-      icon: MessageSquare,
-      color: "bg-blue-500",
-      change: "+12%",
-      changeType: "positive",
-    },
-    {
-      title: "Nota Média",
-      value: "4.2",
-      icon: Star,
-      color: "bg-yellow-500",
-      change: "+0.3",
-      changeType: "positive",
-    },
-    {
-      title: "Usuários Ativos",
-      value: "1,247",
-      icon: Users,
-      color: "bg-green-500",
-      change: "+8%",
-      changeType: "positive",
-    },
-    {
-      title: "Taxa de Satisfação",
-      value: "87%",
-      icon: TrendingUp,
-      color: "bg-purple-500",
-      change: "+5%",
-      changeType: "positive",
-    },
-  ]
 
  const feedbacks = [
     {
@@ -260,42 +221,82 @@ export default function Dashboard() {
     },
   ];
 
+  // Calcular métricas 
+  const totalFeedbacks = feedbacks.length;
+  const dynamicAverageRating = feedbacks.reduce((acc, feedback) => acc + feedback.rating, 0) / feedbacks.length;
+  const uniqueUsers = new Set(feedbacks.map(f => f.user)).size;
+  const satisfactionRate = (feedbacks.filter(f => f.rating >= 4).length / totalFeedbacks) * 100;
+
+  const metrics = [
+    {
+      title: "Total de Feedbacks",
+      value: totalFeedbacks.toLocaleString(),
+      icon: MessageSquare,
+      color: "bg-blue-500",
+      change: "+12%",
+      changeType: "positive",
+    },
+    {
+      title: "Nota Média",
+      value: dynamicAverageRating.toFixed(1),
+      icon: Star,
+      color: "bg-yellow-500",
+      change: "+0.3",
+      changeType: "positive",
+    },
+    {
+      title: "Usuários Únicos",
+      value: uniqueUsers.toLocaleString(),
+      icon: Users,
+      color: "bg-green-500",
+      change: "+8%",
+      changeType: "positive",
+    },
+    {
+      title: "Taxa de Satisfação",
+      value: `${Math.round(satisfactionRate)}%`,
+      icon: TrendingUp,
+      color: "bg-purple-500",
+      change: "+5%",
+      changeType: "positive",
+    },
+  ];
+
 
   const status = [
-    { label: 'NOVO', value: feedbacks.filter(feedback => feedback.status === 'novo').length, color: '#00C49F' },
-    { label: 'RESP', value: feedbacks.filter(feedback => feedback.status === 'respondido').length, color: '#FF8042' },
-    { label: 'LIDO', value: feedbacks.filter(feedback => feedback.status === 'lido').length, color: '#FFBB28' },
+    { label: 'NOVO', value: feedbacks.filter(feedback => feedback.status === 'novo').length, color: '#22c55e' },
+    { label: 'LIDO', value: feedbacks.filter(feedback => feedback.status === 'lido').length, color: '#3b82f6' },
+    { label: 'RESP', value: feedbacks.filter(feedback => feedback.status === 'respondido').length, color: '#a855f7' },
   ];
 
   const rating = [
-    { name: '1 Estrela', value: feedbacks.filter(feedback => feedback.rating === 1).length, color: '#f76f6fff' , data: feedbacks.map(feedback => ({ id: feedback.id, user: feedback.user })) },
-    { name: '2 Estrelas', value: feedbacks.filter(feedback => feedback.rating === 2).length, color: '#f3983dff' , data: feedbacks.map(feedback => ({ id: feedback.id, user: feedback.user })) },
-    { name: '3 Estrelas', value: feedbacks.filter(feedback => feedback.rating === 3).length, color: '#f8f876ff' , data: feedbacks.map(feedback => ({ id: feedback.id, user: feedback.user })) },
-    { name: '4 Estrelas', value: feedbacks.filter(feedback => feedback.rating === 4).length, color: '#aaf360ff' , data: feedbacks.map(feedback => ({ id: feedback.id, user: feedback.user })) },
-    { name: '5 Estrelas', value: feedbacks.filter(feedback => feedback.rating === 5).length, color: '#7be97bff' , data: feedbacks.map(feedback => ({ id: feedback.id, user: feedback.user })) },
-  ]
+    { name: '1 Estrela', value: feedbacks.filter(feedback => feedback.rating === 1).length, color: '#ef4444' }, // Vermelho
+    { name: '2 Estrelas', value: feedbacks.filter(feedback => feedback.rating === 2).length, color: '#f97316' }, // Laranja
+    { name: '3 Estrelas', value: feedbacks.filter(feedback => feedback.rating === 3).length, color: '#eab308' }, // Amarelo
+    { name: '4 Estrelas', value: feedbacks.filter(feedback => feedback.rating === 4).length, color: '#84cc16' }, // Verde claro
+    { name: '5 Estrelas', value: feedbacks.filter(feedback => feedback.rating === 5).length, color: '#22c55e' }, // Verde
+  ];
 
   const mediumRating = [
-    {name: "abaixo", value: feedbacks.reduce((acc, feedback) => acc + feedback.rating, 0) / feedbacks.length, color: '#f76f6fff'},
-    {name: "acima", value: feedbacks.reduce((acc, feedback) => acc + feedback.rating, 0) / feedbacks.length, color: '#f8f876ff'},
-    {name: "média", value: feedbacks.reduce((acc, feedback) => acc + feedback.rating, 0) / feedbacks.length, color: '#7be97bff'}
-  ]
+    { name: "Satisfação", value: feedbacks.reduce((acc, feedback) => acc + feedback.rating, 0) / feedbacks.length, color: '#00C49F' },
+    { name: "Máximo", value: 5 - (feedbacks.reduce((acc, feedback) => acc + feedback.rating, 0) / feedbacks.length), color: '#f1f5f9' }
+  ];
+
+  // Calcular a média para o gauge
+  const averageRating = dynamicAverageRating;
+  const value = averageRating;
 
   // Funções para ações dos feedbacks
   const handleMarkAsRead = (feedbackId: number) => {
     console.log(`Marcando feedback ${feedbackId} como lido`);
     setOpenActionMenuId(null);
-    // Simular atualização do status
     alert(`Feedback ${feedbackId} marcado como lido!`);
-    // Aqui você adicionaria a lógica para atualizar o status no backend
   };
 
   const handleMarkAsResponded = (feedbackId: number) => {
     console.log(`Marcando feedback ${feedbackId} como respondido`);
     setOpenActionMenuId(null);
-    // Simular atualização do status
     alert(`Feedback ${feedbackId} marcado como respondido!`);
-    // Aqui você adicionaria a lógica para atualizar o status no backend
   };
 
   const handleViewDetails = (feedbackId: number) => {
@@ -312,7 +313,6 @@ export default function Dashboard() {
       console.log(`Excluindo feedback ${feedbackId}`);
       alert(`Feedback ${feedbackId} excluído com sucesso!`);
       setOpenActionMenuId(null);
-      // Aqui você adicionaria a lógica para excluir no backend
     }
   };
 
@@ -330,15 +330,12 @@ export default function Dashboard() {
   // Função para enviar resposta
   const handleSendResponse = (feedbackId: number, responseText: string) => {
     console.log(`Enviando resposta para feedback ${feedbackId}:`, responseText);
-    
-    // Simular envio da resposta
+  
     const feedback = feedbacks.find(f => f.id === feedbackId);
     if (feedback) {
       alert(`Resposta enviada com sucesso para ${feedback.user}!\n\nResposta: "${responseText}"`);
     }
-    
-    // Aqui você adicionaria a lógica para salvar a resposta no backend
-    // e atualizar o status do feedback para "respondido"
+
   };
 
   // Função para fechar modal de resposta
@@ -361,6 +358,20 @@ export default function Dashboard() {
     if (ratingFilter !== 'todos') count++;
     if (dateFilter !== 'todos') count++;
     return count;
+  };
+
+  // Função para obter cores do status
+  const getStatusColors = (status: string) => {
+    switch (status) {
+      case 'novo':
+        return 'bg-green-100 text-green-800';
+      case 'lido':
+        return 'bg-blue-100 text-blue-800';
+      case 'respondido':
+        return 'bg-purple-100 text-purple-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
   };
 
   const activeFiltersCount = getActiveFiltersCount();
@@ -572,25 +583,48 @@ export default function Dashboard() {
 
         <div className='flex justify-between items-center mb-8'>
           <div className=' h-85 bg-white w-1/2 rounded-lg py-4 mr-6'>
-            <h2 className='text-2xl font-semibold text-gray-800 text-center mb-4'>Distribuição de Avaliações por Nota (Rating)</h2>
-            <ResponsiveContainer width="100%" height="80%">
-              <BarChart width={150} height={40} data={rating}>
-                <XAxis dataKey="name" />
-                <YAxis />  
-                <CartesianGrid strokeDasharray="3 3" />
-                  <Bar dataKey="value" >
-                    {rating.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Bar>
+            <h2 className='text-2xl font-semibold text-gray-800 text-center mb-2'>Distribuição de Avaliações por Nota (Rating)</h2>
+            <ResponsiveContainer width="100%" height="90%">
+              <BarChart width={150} height={40} data={rating} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                <XAxis 
+                  dataKey="name" 
+                  tick={{ fontSize: 12 }}
+                  angle={-45}
+                  textAnchor="end"
+                  height={60}
+                />
+                <YAxis tick={{ fontSize: 12 }} />  
+                <CartesianGrid strokeDasharray="3 3" opacity={0.3} />
+                <Tooltip 
+                  formatter={(value: number, name: string) => [
+                    `${value} feedback${value !== 1 ? 's' : ''}`,
+                    name
+                  ]}
+                  labelFormatter={(label) => `${label}`}
+                  contentStyle={{
+                    backgroundColor: '#fff',
+                    border: '1px solid #e5e7eb',
+                    borderRadius: '8px',
+                    fontSize: '14px'
+                  }}
+                />
+                <Bar 
+                  dataKey="value" 
+                  radius={[4, 4, 0, 0]}
+                  label={({ value }) => value > 0 ? value : ''}
+                >
+                  {rating.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={entry.color} />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>
 
           <div className='flex justify-between items-center w-1/2'>
             <div className='h-85 bg-white w-2/3 rounded-lg py-4 mr-6'>
-              <h2 className='text-2xl font-semibold text-gray-800 text-center mb-4'>Proporção de Status dos Feedbacks</h2>
-              <ResponsiveContainer width="100%" height="80%">
+              <h2 className='text-2xl font-semibold text-gray-800 text-center mb-2'>Avaliação Média dos Feedbacks</h2>
+              <ResponsiveContainer width="100%" height="90%">
                 <PieChart width={150} height={40}>
                   <Pie
                     dataKey="value"
@@ -609,27 +643,80 @@ export default function Dashboard() {
                     ))}
                   </Pie>
                   {needle({ value, data: mediumRating, cx, cy, iR, oR, color: '#797979ff' })}
+                  <text 
+                    x="50%" 
+                    y="75%" 
+                    textAnchor="middle" 
+                    dominantBaseline="middle" 
+                    fontSize="24" 
+                    fontWeight="bold" 
+                    fill="#374151"
+                  >
+                    {averageRating.toFixed(1)}
+                  </text>
+                  <text 
+                    x="50%" 
+                    y="82%" 
+                    textAnchor="middle" 
+                    dominantBaseline="middle" 
+                    fontSize="14" 
+                    fill="#9CA3AF"
+                  >
+                    de 5.0
+                  </text>
+                  <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
             </div>
             <div className='h-85 bg-white w-2/3 rounded-lg py-4'>
-              <h2 className='text-2xl font-semibold text-gray-800 text-center mb-4'>Proporção de Status dos Feedbacks</h2>
-              <ResponsiveContainer width="100%" height="80%">
+              <h2 className='text-2xl font-semibold text-gray-800 text-center mb-2'>Proporção de Status dos Feedbacks</h2>
+              <ResponsiveContainer width="100%" height="90%">
                 <PieChart width={150} height={40}>
-                  <Tooltip  />
+                  <Tooltip 
+                    formatter={(value: number, name: string) => [
+                      `${value} feedback${value !== 1 ? 's' : ''}`,
+                      name === 'NOVO' ? 'Novos' : name === 'LIDO' ? 'Lidos' : 'Respondidos'
+                    ]}
+                    labelFormatter={() => ''}
+                    contentStyle={{
+                      backgroundColor: '#fff',
+                      border: '1px solid #e5e7eb',
+                      borderRadius: '8px',
+                      fontSize: '14px'
+                    }}
+                  />
                   <Pie
                     data={status}
                     dataKey="value"
                     fill="#884d98"
                     nameKey="label"
+                    cx="55%"
+                    cy="50%"
                     innerRadius={60}
                     outerRadius={100}
+                    label={({value, percent}: any) => 
+                      value && value > 0 && percent ? `${(percent * 100).toFixed(0)}%` : ''
+                      
+                    }
+                    labelLine={false}
+                    
                     >
                     {status.map((entry) => (
                       <Cell key={`cell-${entry.label}`} fill={entry.color} />
                     ))}
                   </Pie>
-                  <Legend layout="vertical" align="right" verticalAlign="middle" iconSize={15} iconType='circle' itemSorter='dataKey' wrapperStyle={{fontSize: '1.5rem', paddingRight: '15px'}} />
+                  <Legend 
+                    layout="vertical" 
+                    align="right" 
+                    verticalAlign="middle" 
+                    iconSize={12} 
+                    iconType='circle' 
+                    wrapperStyle={{fontSize: '1.5rem', paddingRight: '5px'}}
+                    formatter={(value) => 
+                      value === 'NOVO' ? 'Novos' : 
+                      value === 'LIDO' ? 'Lidos' : 'Respondidos'
+                    }
+                  />
                 </PieChart>
               </ResponsiveContainer>               
             </div>
@@ -869,15 +956,9 @@ export default function Dashboard() {
                         {feedback.date}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-xl text-gray-500">
-                        {feedback.status === 'novo' ? (
-                          <span className="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xl">
-                            {feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1)}
-                          </span>
-                        ) : (
-                          <span className="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xl">
-                            {feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1)}
-                          </span>
-                        )}
+                        <span className={`px-2 py-1 rounded-full text-xl ${getStatusColors(feedback.status)}`}>
+                          {feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1)}
+                        </span>
                       </td>
                       <td className="px-9 py-4 whitespace-nowrap text-right text-xl font-medium flex justify-start items-center">
                         <div className="relative action-menu">
