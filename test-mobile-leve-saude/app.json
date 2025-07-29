@@ -1,4 +1,7 @@
 {
   "name": "test-mobile-leve-saude",
-  "slug": "test-mobile-leve-saude"
+  "slug": "test-mobile-leve-saude",
+  "plugins": [
+    "expo-font"
+  ]
 }
