@@ -133,12 +133,12 @@ export default function FeedbackTable({
 
         const csvData = feedbacks.map(feedback => [
             feedback.id,
-            `"${feedback.user.name}"`,
-            `"${feedback.user.email}"`,
-            feedback.rating,
-            `"${feedback.comment.replace(/"/g, '""')}"`,
+            `"${feedback.user?.name || 'Usuário não identificado'}"`,
+            `"${feedback.user?.email || 'Email não disponível'}"`,
+            feedback.rating || 0,
+            `"${(feedback.comment || 'Sem comentário').replace(/"/g, '""')}"`,
             formatDate(feedback.createdAt),
-            feedback.status
+            feedback.status || 'novo'
         ]);
 
         const csvContent = [headers, ...csvData]
@@ -175,12 +175,12 @@ export default function FeedbackTable({
             },
             feedbacks: feedbacks.map(feedback => ({
                 id: feedback.id,
-                usuario: feedback.user.name,
-                email: feedback.user.email,
-                avaliacao: feedback.rating,
-                comentario: feedback.comment,
+                usuario: feedback.user?.name || 'Usuário não identificado',
+                email: feedback.user?.email || 'Email não disponível',
+                avaliacao: feedback.rating || 0,
+                comentario: feedback.comment || 'Sem comentário',
                 data: formatDate(feedback.createdAt),
-                status: feedback.status,
+                status: feedback.status || 'novo',
                 resposta: feedback.response ? {
                     texto: feedback.response.text,
                     respondidoPor: feedback.response.respondedBy,
@@ -421,8 +421,8 @@ export default function FeedbackTable({
                                             <div className="flex items-center">
                                                 <UserCircle className="w-8 h-8 text-gray-400" />
                                                 <div className="ml-3">
-                                                    <div className="text-xl font-medium text-gray-900">{feedback.user.name}</div>
-                                                    <div className="text-sm text-gray-500">{feedback.user.email}</div>
+                                                    <div className="text-xl font-medium text-gray-900">{feedback.user?.name || 'Usuário não identificado'}</div>
+                                                    <div className="text-sm text-gray-500">{feedback.user?.email || 'Email não disponível'}</div>
                                                 </div>
                                             </div>
                                         </td>
@@ -431,22 +431,22 @@ export default function FeedbackTable({
                                                 {[...Array(5)].map((_, i) => (
                                                     <Star
                                                         key={i}
-                                                        className={`w-4 h-4 ${i < feedback.rating ? 'text-yellow-400 fill-current' : 'text-gray-300'
+                                                        className={`w-4 h-4 ${i < (feedback.rating || 0) ? 'text-yellow-400 fill-current' : 'text-gray-300'
                                                             }`}
                                                     />
                                                 ))}
-                                                <span className="ml-2 text-xl text-gray-600">{feedback.rating}</span>
+                                                <span className="ml-2 text-xl text-gray-600">{feedback.rating || 0}</span>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4">
-                                            <div className="text-xl text-gray-900 max-w-xs truncate">{feedback.comment}</div>
+                                            <div className="text-xl text-gray-900 max-w-xs truncate">{feedback.comment || 'Sem comentário'}</div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-xl text-gray-500">
                                             {formatDate(feedback.createdAt)}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-xl text-gray-500">
-                                            <span className={`px-2 py-1 rounded-full text-xl ${getStatusColors(feedback.status)}`}>
-                                                {feedback.status.charAt(0).toUpperCase() + feedback.status.slice(1)}
+                                            <span className={`px-2 py-1 rounded-full text-xl ${getStatusColors(feedback.status || 'novo')}`}>
+                                                {(feedback.status || 'novo').charAt(0).toUpperCase() + (feedback.status || 'novo').slice(1)}
                                             </span>
                                         </td>
                                         <td className="px-9 py-4 whitespace-nowrap text-right text-xl font-medium flex justify-start items-center">
