@@ -1,50 +1,150 @@
 
-# TypeScript
+# Leve Saúde Feedback
 
-[![CI](https://github.com/microsoft/TypeScript/actions/workflows/ci.yml/badge.svg)](https://github.com/microsoft/TypeScript/actions/workflows/ci.yml)
-[![npm version](https://badge.fury.io/js/typescript.svg)](https://www.npmjs.com/package/typescript)
-[![Downloads](https://img.shields.io/npm/dm/typescript.svg)](https://www.npmjs.com/package/typescript)
-[![OpenSSF Scorecard](https://api.securityscorecards.dev/projects/github.com/microsoft/TypeScript/badge)](https://securityscorecards.dev/viewer/?uri=github.com/microsoft/TypeScript)
+[![React Native](https://img.shields.io/badge/React%20Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo-1C1E24?style=for-the-badge&logo=expo&logoColor=#D04A37)](https://expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Firebase](https://img.shields.io/badge/Firebase-039BE5?style=for-the-badge&logo=Firebase&logoColor=white)](https://firebase.google.com/)
 
+Aplicativo móvel para coleta e gerenciamento de feedback de usuários da plataforma Leve Saúde, desenvolvido com React Native e Expo.
 
-[TypeScript](https://www.typescriptlang.org/) is a language for application-scale JavaScript. TypeScript adds optional types to JavaScript that support tools for large-scale JavaScript applications for any browser, for any host, on any OS. TypeScript compiles to readable, standards-based JavaScript. Try it out at the [playground](https://www.typescriptlang.org/play/), and stay up to date via [our blog](https://blogs.msdn.microsoft.com/typescript) and [Twitter account](https://twitter.com/typescript).
+## 📱 Sobre o Projeto
 
-Find others who are using TypeScript at [our community page](https://www.typescriptlang.org/community/).
+O **Leve Saúde Feedback** é um aplicativo móvel que permite aos usuários enviar feedback, sugestões e relatar problemas relacionados aos serviços da plataforma Leve Saúde. O app oferece uma interface intuitiva e moderna para facilitar a comunicação entre usuários e a equipe de desenvolvimento.
 
-## Installing
+## ✨ Funcionalidades
 
-For the latest stable version:
+- 📝 Envio de feedback e sugestões
+- 🐛 Relatório de bugs e problemas
+- 🔐 Sistema de autenticação seguro
+- 📊 Dashboard para visualização de feedbacks
+- 🌙 Interface moderna e responsiva
+- 📱 Compatível com iOS e Android
 
+## 🛠️ Tecnologias Utilizadas
+
+- **React Native** - Framework para desenvolvimento mobile
+- **Expo** - Plataforma para desenvolvimento React Native
+- **TypeScript** - Tipagem estática para JavaScript
+- **Firebase** - Backend as a Service (autenticação e banco de dados)
+- **React Navigation** - Navegação entre telas
+- **Vector Icons** - Ícones personalizados
+- **ESLint & Prettier** - Qualidade e formatação de código
+
+## 🚀 Instalação e Configuração
+
+### Pré-requisitos
+
+- Node.js (versão 18 ou superior)
+- npm ou yarn
+- Expo CLI
+- Android Studio (para Android) ou Xcode (para iOS)
+
+### Instalação
+
+1. Clone o repositório:
 ```bash
-npm install -D typescript
+git clone https://github.com/Pandcav/test-mobile-leve-saude.git
+cd test-mobile-leve-saude
 ```
 
-For our nightly builds:
-
+2. Instale as dependências:
 ```bash
-npm install -D typescript@next
+npm install
 ```
 
-## Contribute
+3. Configure as variáveis de ambiente para Firebase (crie um arquivo `.env` baseado no `.env.example`)
 
-There are many ways to [contribute](https://github.com/microsoft/TypeScript/blob/main/CONTRIBUTING.md) to TypeScript.
-* [Submit bugs](https://github.com/microsoft/TypeScript/issues) and help us verify fixes as they are checked in.
-* Review the [source code changes](https://github.com/microsoft/TypeScript/pulls).
-* Engage with other TypeScript users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/typescript).
-* Help each other in the [TypeScript Community Discord](https://discord.gg/typescript).
-* Join the [#typescript](https://twitter.com/search?q=%23TypeScript) discussion on Twitter.
-* [Contribute bug fixes](https://github.com/microsoft/TypeScript/blob/main/CONTRIBUTING.md).
+### Executando o Projeto
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see
-the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com)
-with any additional questions or comments.
+Para iniciar o servidor de desenvolvimento:
 
-## Documentation
+```bash
+npm start
+```
 
-*  [TypeScript in 5 minutes](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html)
-*  [Programming handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
-*  [Homepage](https://www.typescriptlang.org/)
+Para executar no Android:
+```bash
+npm run android
+```
 
-## Roadmap
+Para executar no iOS:
+```bash
+npm run ios
+```
 
-For details on our planned features and future direction, please refer to our [roadmap](https://github.com/microsoft/TypeScript/wiki/Roadmap).
+Para executar na web:
+```bash
+npm run web
+```
+
+## 📝 Scripts Disponíveis
+
+- `npm start` - Inicia o servidor Expo
+- `npm run android` - Executa no emulador/dispositivo Android
+- `npm run ios` - Executa no simulador/dispositivo iOS
+- `npm run web` - Executa no navegador web
+- `npm run lint` - Executa o ESLint
+- `npm run lint:fix` - Corrige problemas do ESLint automaticamente
+- `npm run format` - Formata o código com Prettier
+- `npm run format:check` - Verifica formatação com Prettier
+
+## 📁 Estrutura do Projeto
+
+```
+src/
+├── components/          # Componentes reutilizáveis
+│   ├── auth/           # Componentes de autenticação (vazio)
+│   ├── buttons/        # Componentes de botões
+│   │   ├── PrimaryButton.tsx
+│   │   ├── SecondaryButton.tsx
+│   │   ├── SubmitButton.tsx
+│   │   └── TabButton.tsx
+│   ├── feedback/       # Componentes de feedback (vazio)
+│   ├── ui/             # Componentes de UI (vazio)
+│   ├── AppNavigator.tsx
+│   └── index.ts
+├── config/             # Configurações do app
+│   └── firebase.ts     # Configuração do Firebase
+├── contexts/           # Contextos React
+│   └── AuthContext.tsx # Contexto de autenticação
+├── hooks/              # Hooks customizados (vazio)
+├── navigation/         # Configuração de navegação (vazio)
+├── screens/            # Telas do aplicativo
+│   ├── auth/           # Telas de autenticação
+│   │   └── LoginScreen.tsx
+│   └── main/           # Telas principais
+│       └── FeedbackScreen.tsx
+├── types/              # Definições de tipos TypeScript
+│   └── index.ts
+└── utils/              # Funções utilitárias (vazio)
+```
+
+## 🔧 Configuração do Firebase
+
+1. Crie um projeto no [Firebase Console](https://console.firebase.google.com/)
+2. Configure a autenticação e o Firestore
+3. Adicione as credenciais no arquivo de configuração
+4. Ative as permissões necessárias no Firestore
+
+## 📱 Build para Produção
+
+Para gerar builds de produção, utilize o Expo Application Services (EAS):
+
+```bash
+npx eas build --platform android
+npx eas build --platform ios
+```
+
+## 🤝 Contribuindo
+
+1. Faça um fork do projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo [LICENSE.txt](LICENSE.txt) para mais detalhes.
+
