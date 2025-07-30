@@ -1,7 +1,32 @@
 {
-  "name": "test-mobile-leve-saude",
-  "slug": "test-mobile-leve-saude",
-  "plugins": [
-    "expo-font"
-  ]
+  "expo": {
+    "name": "Leve Saúde Feedback",
+    "slug": "leve-saude-feedback",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.levesaude.feedback"
+    },
+    "android": {
+      "package": "com.levesaude.feedback",
+      "versionCode": 1,
+      "permissions": [
+        "INTERNET",
+        "ACCESS_NETWORK_STATE"
+      ]
+    },
+    "plugins": [
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "0a284ff9-b4e1-410c-8f53-36a07ef547ce"
+      }
+    }
+  }
 }
