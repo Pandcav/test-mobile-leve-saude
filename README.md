@@ -14,10 +14,12 @@ O **Leve Saúde Feedback** é um aplicativo móvel que permite aos usuários env
 
 ## ✨ Funcionalidades
 
-- 📝 Envio de feedback e sugestões
-- 🐛 Relatório de bugs e problemas
-- 🔐 Sistema de autenticação seguro
-- 📊 Dashboard para visualização de feedbacks
+- ⭐ Sistema de avaliação por estrelas (1 a 5)
+- � Envio de feedback e comentários detalhados
+- 🔐 Sistema de autenticação seguro com Firebase
+- � Visualização do histórico de feedbacks enviados
+- 💬 Recebimento de respostas da equipe
+- 🏷️ Status de acompanhamento dos feedbacks (novo, respondido, em análise)
 - 🌙 Interface moderna e responsiva
 - 📱 Compatível com iOS e Android
 
